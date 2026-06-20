@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-20
+
+### Added
+
+- **Native local VLM** — LLaVA-1.5 via HuggingFace `candle` (`--features vlm`)
+- **`agent-eyes vlm describe|status`** CLI and HTTP `/vlm/describe`, `/vlm/status`
+- Config section `[vlm]` — `model_id`, `model_dir`, `max_new_tokens`, `temperature`, `cpu`
+- Publishes `eyes.vlm.described` to agent-spine on successful caption
+
 ## [0.6.0] - 2026-06-20
 
 ### Added

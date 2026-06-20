@@ -1,7 +1,17 @@
 [package]
 name = "agent-eyes"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2021"
+
+[features]
+default = []
+vlm = [
+    "dep:candle-core",
+    "dep:candle-nn",
+    "dep:candle-transformers",
+    "dep:hf-hub",
+    "dep:tokenizers",
+]
 
 [dependencies]
 agent-body-core = { git = "https://github.com/autonomic-ai-dev/agent-body" }
@@ -19,6 +29,11 @@ serde_yaml = "0.9"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+candle-core = { version = "0.8.4", optional = true }
+candle-nn = { version = "0.8.4", optional = true }
+candle-transformers = { version = "0.8.4", optional = true }
+hf-hub = { version = "0.4", optional = true }
+tokenizers = { version = "0.20", optional = true }
 
 [dev-dependencies]
 tempfile = "3"

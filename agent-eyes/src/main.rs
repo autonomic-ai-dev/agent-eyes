@@ -53,6 +53,11 @@ enum Commands {
         #[command(subcommand)]
         command: DomCommands,
     },
+    /// Native local vision (LLaVA via candle, requires --features vlm)
+    Vlm {
+        #[command(subcommand)]
+        command: VlmCommands,
+    },
     /// Show configuration and status
     Status,
 }
@@ -79,6 +84,18 @@ enum DomCommands {
         #[arg(long, default_value_t = 20)]
         limit: u32,
     },
+}
+
+#[derive(Subcommand)]
+enum VlmCommands {
+    /// Describe an image with the local LLaVA model
+    Describe {
+        image: std::path::PathBuf,
+        #[arg(short, long)]
+        prompt: Option<String>,
+    },
+    /// Show VLM configuration and compile status
+    Status,
 }
 
 #[tokio::main]
@@ -142,6 +159,21 @@ async fn main() -> anyhow::Result<()> {
                 println!("{}", serde_json::to_string_pretty(&hits)?);
             }
         },
+        Commands::Vlm { command } => {
+            let config = agent_eyes::config::Config::load()?;
+            match command {
+                VlmCommands::Describe { image, prompt } => {
+                    let result =
+                        agent_eyes::vlm::describe_image(&image, prompt.as_deref(), &config.vlm)
+                            .await?;
+                    println!("{}", serde_json::to_string_pretty(&result)?);
+                }
+                VlmCommands::Status => {
+                    let status = agent_eyes::vlm::vlm_status(&config.vlm);
+                    println!("{}", serde_json::to_string_pretty(&status)?);
+                }
+            }
+        }
         Commands::Status => {
             let config = agent_eyes::config::Config::load()?;
             println!("agent-eyes status");
@@ -156,6 +188,11 @@ async fn main() -> anyhow::Result<()> {
                 println!("  dom pages: {}", stats.pages);
                 println!("  dom elements: {}", stats.elements);
             }
+            let vlm = agent_eyes::vlm::vlm_status(&config.vlm);
+            println!(
+                "  vlm: enabled={} compiled={} model={}",
+                vlm.enabled, vlm.feature_compiled, vlm.model_id
+            );
         }
     }
     Ok(())

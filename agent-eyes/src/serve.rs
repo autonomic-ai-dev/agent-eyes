@@ -11,6 +11,7 @@ use crate::config::Config;
 use crate::diff;
 use crate::dom_index;
 use crate::spine::SpineClient;
+use crate::vlm;
 
 pub struct AppState {
     pub config: Config,
@@ -41,6 +42,8 @@ pub async fn start(config: Config) -> anyhow::Result<()> {
         .route("/dom/index", post(dom_index_url))
         .route("/dom/stats", get(dom_stats))
         .route("/dom/search", get(dom_search))
+        .route("/vlm/status", get(vlm_status_handler))
+        .route("/vlm/describe", post(vlm_describe))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", port);
@@ -183,6 +186,41 @@ async fn dom_search(
     let limit = params.limit.unwrap_or(20);
     match dom_index::search(&params.q, limit) {
         Ok(hits) => Json(serde_json::json!({ "ok": true, "hits": hits })),
+        Err(e) => Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
+    }
+}
+
+async fn vlm_status_handler(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    let status = vlm::vlm_status(&state.config.vlm);
+    Json(serde_json::json!({ "ok": true, "vlm": status }))
+}
+
+#[derive(serde::Deserialize)]
+struct VlmDescribeRequest {
+    image: String,
+    prompt: Option<String>,
+}
+
+async fn vlm_describe(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<VlmDescribeRequest>,
+) -> Json<serde_json::Value> {
+    let image_path = PathBuf::from(&req.image);
+    match vlm::describe_image(&image_path, req.prompt.as_deref(), &state.config.vlm).await {
+        Ok(result) => {
+            let _ = state
+                .spine
+                .publish(
+                    "eyes.vlm.described",
+                    &serde_json::json!({
+                        "image": result.image,
+                        "model": result.model,
+                        "caption_len": result.caption.len(),
+                    }),
+                )
+                .await;
+            Json(serde_json::json!({ "ok": true, "result": result }))
+        }
         Err(e) => Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
     }
 }
