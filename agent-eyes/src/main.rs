@@ -48,8 +48,37 @@ enum Commands {
         #[arg(long)]
         update_baseline: bool,
     },
+    /// DOM indexing and search (SQLite at ~/.autonomic/memory/eyes_dom.db)
+    Dom {
+        #[command(subcommand)]
+        command: DomCommands,
+    },
     /// Show configuration and status
     Status,
+}
+
+#[derive(Subcommand)]
+enum DomCommands {
+    /// Fetch and index a URL into the DOM database
+    Index {
+        url: String,
+        #[arg(long, default_value_t = 5000)]
+        max_elements: usize,
+    },
+    /// Index a local HTML file
+    File {
+        path: std::path::PathBuf,
+        #[arg(long, default_value_t = 5000)]
+        max_elements: usize,
+    },
+    /// Show DOM index statistics
+    Stats,
+    /// Search indexed DOM elements
+    Search {
+        query: String,
+        #[arg(long, default_value_t = 20)]
+        limit: u32,
+    },
 }
 
 #[tokio::main]
@@ -95,6 +124,24 @@ async fn main() -> anyhow::Result<()> {
                 std::process::exit(1);
             }
         }
+        Commands::Dom { command } => match command {
+            DomCommands::Index { url, max_elements } => {
+                let report = agent_eyes::dom_index::index_url(&url, max_elements).await?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
+            DomCommands::File { path, max_elements } => {
+                let report = agent_eyes::dom_index::index_file(&path, max_elements)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
+            DomCommands::Stats => {
+                let stats = agent_eyes::dom_index::load_stats()?;
+                println!("{}", serde_json::to_string_pretty(&stats)?);
+            }
+            DomCommands::Search { query, limit } => {
+                let hits = agent_eyes::dom_index::search(&query, limit)?;
+                println!("{}", serde_json::to_string_pretty(&hits)?);
+            }
+        },
         Commands::Status => {
             let config = agent_eyes::config::Config::load()?;
             println!("agent-eyes status");
@@ -104,6 +151,11 @@ async fn main() -> anyhow::Result<()> {
             );
             println!("  server port: {}", config.server.port);
             println!("  spine url: {}", config.spine.url);
+            println!("  dom db: {}", agent_eyes::dom_index::db_path().display());
+            if let Ok(stats) = agent_eyes::dom_index::load_stats() {
+                println!("  dom pages: {}", stats.pages);
+                println!("  dom elements: {}", stats.elements);
+            }
         }
     }
     Ok(())

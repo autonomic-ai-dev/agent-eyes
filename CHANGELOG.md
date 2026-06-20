@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-20
+
+### Added
+
+- **Continuous DOM indexing** — SQLite store at `~/.autonomic/memory/eyes_dom.db`
+- **`agent-eyes dom index|file|stats|search`** CLI and HTTP `/dom/index`, `/dom/stats`, `/dom/search`
+- Publishes `eyes.dom.indexed` to agent-spine on index
+
 ## [0.5.0] - 2026-06-20
 
 ### Added

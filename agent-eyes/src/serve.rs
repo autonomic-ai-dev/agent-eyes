@@ -9,6 +9,7 @@ use std::sync::Arc;
 use crate::capture;
 use crate::config::Config;
 use crate::diff;
+use crate::dom_index;
 use crate::spine::SpineClient;
 
 pub struct AppState {
@@ -37,6 +38,9 @@ pub async fn start(config: Config) -> anyhow::Result<()> {
         .route("/health", get(health))
         .route("/capture", post(capture_url))
         .route("/diff", post(pixel_diff))
+        .route("/dom/index", post(dom_index_url))
+        .route("/dom/stats", get(dom_stats))
+        .route("/dom/search", get(dom_search))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", port);
@@ -123,5 +127,62 @@ async fn pixel_diff(
             Json(serde_json::json!({"success": true}))
         }
         Err(e) => Json(serde_json::json!({"success": false, "error": e.to_string()})),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct DomIndexRequest {
+    url: String,
+    #[serde(default = "default_max_elements")]
+    max_elements: usize,
+}
+
+fn default_max_elements() -> usize {
+    5000
+}
+
+async fn dom_index_url(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<DomIndexRequest>,
+) -> Json<serde_json::Value> {
+    match dom_index::index_url(&req.url, req.max_elements).await {
+        Ok(report) => {
+            let _ = state
+                .spine
+                .publish(
+                    "eyes.dom.indexed",
+                    &serde_json::json!({
+                        "url": report.url,
+                        "elements_indexed": report.elements_indexed,
+                    }),
+                )
+                .await;
+            Json(serde_json::json!({ "ok": true, "report": report }))
+        }
+        Err(e) => Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
+    }
+}
+
+async fn dom_stats(State(_): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    match dom_index::load_stats() {
+        Ok(stats) => Json(serde_json::json!({ "ok": true, "stats": stats })),
+        Err(e) => Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct DomSearchQuery {
+    q: String,
+    limit: Option<u32>,
+}
+
+async fn dom_search(
+    State(_): State<Arc<AppState>>,
+    axum::extract::Query(params): axum::extract::Query<DomSearchQuery>,
+) -> Json<serde_json::Value> {
+    let limit = params.limit.unwrap_or(20);
+    match dom_index::search(&params.q, limit) {
+        Ok(hits) => Json(serde_json::json!({ "ok": true, "hits": hits })),
+        Err(e) => Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
     }
 }
