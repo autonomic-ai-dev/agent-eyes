@@ -4,3 +4,4 @@ pub mod describe;
 pub mod diff;
 pub mod serve;
 pub mod spine;
+pub mod verify;

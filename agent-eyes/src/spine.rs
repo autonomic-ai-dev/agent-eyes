@@ -52,11 +52,7 @@ impl SpineClient {
         Ok(())
     }
 
-    pub async fn publish(
-        &self,
-        subject: &str,
-        payload: &serde_json::Value,
-    ) -> anyhow::Result<()> {
+    pub async fn publish(&self, subject: &str, payload: &serde_json::Value) -> anyhow::Result<()> {
         let body = serde_json::json!({
             "source": self.name,
             "subject": subject,

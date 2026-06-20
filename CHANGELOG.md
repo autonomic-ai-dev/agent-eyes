@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-20
+
+### Added
+
+- **Visual UI verification** — `verify localhost:3000` pixel-diff against baselines before autonomous dataset loops
+
 ## [0.4.0] - 2026-06-20
 
 ### Added

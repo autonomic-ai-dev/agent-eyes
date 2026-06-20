@@ -2,7 +2,18 @@ use anyhow::Result;
 use image::GenericImageView;
 use std::path::Path;
 
-pub fn pixel_diff(reference: &Path, comparison: &Path, output: &Path) -> Result<()> {
+#[derive(Debug, Clone)]
+pub struct DiffMetrics {
+    pub diff_pixels: u64,
+    pub total_pixels: u64,
+    pub diff_percent: f64,
+}
+
+pub fn pixel_diff_metrics(
+    reference: &Path,
+    comparison: &Path,
+    output: &Path,
+) -> Result<DiffMetrics> {
     let ref_img = image::open(reference)?;
     let comp_img = image::open(comparison)?;
 
@@ -29,16 +40,30 @@ pub fn pixel_diff(reference: &Path, comparison: &Path, output: &Path) -> Result<
 
     diff_img.save(output)?;
 
-    let pct = if total_pixels > 0 {
+    let diff_percent = if total_pixels > 0 {
         (diff_pixels as f64 / total_pixels as f64) * 100.0
     } else {
         0.0
     };
 
+    Ok(DiffMetrics {
+        diff_pixels,
+        total_pixels,
+        diff_percent,
+    })
+}
+
+pub fn pixel_diff(reference: &Path, comparison: &Path, output: &Path) -> Result<()> {
+    let ref_img = image::open(reference)?;
+    let comp_img = image::open(comparison)?;
+    let (rw, rh) = ref_img.dimensions();
+    let (cw, ch) = comp_img.dimensions();
+    let metrics = pixel_diff_metrics(reference, comparison, output)?;
+
     let result = serde_json::json!({
-        "diff_pixels": diff_pixels,
-        "total_pixels": total_pixels,
-        "diff_percent": format!("{:.2}", pct),
+        "diff_pixels": metrics.diff_pixels,
+        "total_pixels": metrics.total_pixels,
+        "diff_percent": format!("{:.2}", metrics.diff_percent),
         "dimensions": {
             "reference": format!("{}x{}", rw, rh),
             "comparison": format!("{}x{}", cw, ch),

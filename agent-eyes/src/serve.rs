@@ -1,4 +1,8 @@
-use axum::{Json, Router, extract::State, routing::{get, post}};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -15,11 +19,7 @@ pub struct AppState {
 pub async fn start(config: Config) -> anyhow::Result<()> {
     tracing::info!("Starting agent-eyes daemon...");
 
-    let spine = SpineClient::new(
-        &config.spine.url,
-        "agent-eyes",
-        env!("CARGO_PKG_VERSION"),
-    );
+    let spine = SpineClient::new(&config.spine.url, "agent-eyes", env!("CARGO_PKG_VERSION"));
     spine.register().await?;
 
     let spine_clone = spine.clone();
