@@ -4,6 +4,14 @@
 
 `agent-eyes` captures URLs, runs pixel diffs, indexes DOM into SQLite, and optionally describes images with LLaVA via candle.
 
+```mermaid
+flowchart LR
+    URL[URL / UI] --> Capture[Capture]
+    Capture --> Diff[Pixel Diff]
+    Capture --> Index[(DOM Index<br>SQLite)]
+    Capture --> VLM[VLM<br>LLaVA]
+```
+
 Standalone: `agent-eyes capture` · Integrated: spine events (`eyes.captured`, `eyes.dom.indexed`, `eyes.vlm.described`).
 
 ---
