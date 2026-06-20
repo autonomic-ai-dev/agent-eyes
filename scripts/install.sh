@@ -48,6 +48,13 @@ echo "Downloading $ARCHIVE_URL ..."
 curl -fsSL "$ARCHIVE_URL" -o "$BINARY_DIR/$NAME"
 chmod +x "$BINARY_DIR/$NAME"
 
+# macOS Gatekeeper: clear quarantine + ad-hoc sign
+if [[ "$(uname -s)" == "Darwin" ]] && command -v codesign >/dev/null 2>&1; then
+  xattr -cr "$BINARY_DIR/$NAME" 2>/dev/null || true
+  codesign --force --sign - "$BINARY_DIR/$NAME" 2>/dev/null || true
+  echo "macOS: cleared quarantine and adhoc-signed $NAME"
+fi
+
 echo ""
 echo "Installed to $BINARY_DIR/$NAME"
 echo ""
