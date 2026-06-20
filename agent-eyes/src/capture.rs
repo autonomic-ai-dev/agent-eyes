@@ -6,6 +6,11 @@ pub async fn capture_url(url: &str, output: &Path) -> Result<()> {
     let resp = client.get(url).send().await?;
     let bytes = resp.bytes().await?;
     std::fs::write(output, &bytes)?;
-    println!("Downloaded {} ({} bytes) to {}", url, bytes.len(), output.display());
+    println!(
+        "Downloaded {} ({} bytes) to {}",
+        url,
+        bytes.len(),
+        output.display()
+    );
     Ok(())
 }

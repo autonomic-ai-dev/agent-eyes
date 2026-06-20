@@ -47,13 +47,20 @@ async fn main() -> anyhow::Result<()> {
         Commands::Capture { url, output } => {
             agent_eyes::capture::capture_url(&url, &output).await?;
         }
-        Commands::Diff { reference, comparison, output } => {
+        Commands::Diff {
+            reference,
+            comparison,
+            output,
+        } => {
             agent_eyes::diff::pixel_diff(&reference, &comparison, &output)?;
         }
         Commands::Status => {
             let _ = agent_eyes::config::Config::load()?;
             println!("agent-eyes status");
-            println!("  config: {}", agent_eyes::config::Config::config_path().display());
+            println!(
+                "  config: {}",
+                agent_eyes::config::Config::config_path().display()
+            );
         }
     }
     Ok(())
