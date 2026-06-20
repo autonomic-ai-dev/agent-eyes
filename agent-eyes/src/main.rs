@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
+#[command(version)]
 #[command(name = "agent-eyes", about = "Observability and visual QA")]
 struct Cli {
     #[command(subcommand)]
