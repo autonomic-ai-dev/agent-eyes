@@ -29,6 +29,11 @@ enum Commands {
         #[arg(short, long, default_value = "diff.png")]
         output: std::path::PathBuf,
     },
+    /// Describe a URL or file (extract structure, count elements)
+    Describe {
+        /// URL (e.g. localhost:3000) or file path
+        target: String,
+    },
     /// Show configuration and status
     Status,
 }
@@ -54,6 +59,9 @@ async fn main() -> anyhow::Result<()> {
             output,
         } => {
             agent_eyes::diff::pixel_diff(&reference, &comparison, &output)?;
+        }
+        Commands::Describe { target } => {
+            agent_eyes::describe::describe_target(&target).await?;
         }
         Commands::Status => {
             let config = agent_eyes::config::Config::load()?;

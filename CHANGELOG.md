@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-20
+
+### Added
+
+- **Page description CLI** — `agent-eyes describe <url>` downloads and analyzes a web page, extracting title, headings, links, images, framework detection, and content statistics
+- **Image analysis** — `agent-eyes describe <image>` returns dimensions, file size, and color type
+- **File analysis** — `agent-eyes describe <file>` handles HTML, images, and text files with preview
+
+### Changed
+
+- Version bumped from `0.2.0` to `0.3.0`
+
 ## [0.2.0] - 2026-06-20
 
 ### Added
