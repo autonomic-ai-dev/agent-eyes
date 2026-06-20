@@ -42,7 +42,8 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Serve => {
-            println!("agent-eyes serve (not yet implemented)");
+            let config = agent_eyes::config::Config::load()?;
+            agent_eyes::serve::start(config).await?;
         }
         Commands::Capture { url, output } => {
             agent_eyes::capture::capture_url(&url, &output).await?;
@@ -55,12 +56,14 @@ async fn main() -> anyhow::Result<()> {
             agent_eyes::diff::pixel_diff(&reference, &comparison, &output)?;
         }
         Commands::Status => {
-            let _ = agent_eyes::config::Config::load()?;
+            let config = agent_eyes::config::Config::load()?;
             println!("agent-eyes status");
             println!(
                 "  config: {}",
                 agent_eyes::config::Config::config_path().display()
             );
+            println!("  server port: {}", config.server.port);
+            println!("  spine url: {}", config.spine.url);
         }
     }
     Ok(())
