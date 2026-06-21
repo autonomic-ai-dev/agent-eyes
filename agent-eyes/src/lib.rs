@@ -3,6 +3,7 @@ pub mod config;
 pub mod describe;
 pub mod diff;
 pub mod dom_index;
+pub mod log;
 pub mod serve;
 pub mod spine;
 pub mod verify;

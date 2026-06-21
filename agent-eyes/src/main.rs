@@ -61,6 +61,17 @@ enum Commands {
     },
     /// Show configuration and status
     Status,
+    /// View supervisor logs
+    Log {
+        /// List available logs
+        #[arg(long)]
+        list: bool,
+        /// Log name to print
+        name: Option<String>,
+        /// Follow (tail -f) the log
+        #[arg(long)]
+        follow: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -194,6 +205,19 @@ async fn main() -> anyhow::Result<()> {
                 "  vlm: enabled={} compiled={} model={}",
                 vlm.enabled, vlm.feature_compiled, vlm.model_id
             );
+        }
+        Commands::Log { list, name, follow } => {
+            if list {
+                for log in agent_eyes::log::list_logs()? {
+                    println!("{log}");
+                }
+            } else if let Some(name) = name {
+                if follow {
+                    agent_eyes::log::follow_log(&name)?;
+                } else {
+                    agent_eyes::log::print_log(&name)?;
+                }
+            }
         }
     }
     Ok(())
