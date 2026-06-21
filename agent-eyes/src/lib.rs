@@ -6,5 +6,6 @@ pub mod dom_index;
 pub mod log;
 pub mod serve;
 pub mod spine;
+pub mod update;
 pub mod verify;
 pub mod vlm;

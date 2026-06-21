@@ -59,6 +59,12 @@ enum Commands {
         #[command(subcommand)]
         command: VlmCommands,
     },
+    /// Update agent-eyes to the latest release
+    Update {
+        /// Force update even if already at latest version
+        #[arg(long)]
+        force: bool,
+    },
     /// Show configuration and status
     Status,
     /// View supervisor logs
@@ -185,6 +191,9 @@ async fn main() -> anyhow::Result<()> {
                     println!("{}", serde_json::to_string_pretty(&status)?);
                 }
             }
+        }
+        Commands::Update { force } => {
+            agent_eyes::update::run_update(force)?;
         }
         Commands::Status => {
             let config = agent_eyes::config::Config::load()?;

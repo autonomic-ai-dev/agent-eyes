@@ -321,7 +321,7 @@ fn strip_tags(input: &str) -> String {
     out
 }
 
-fn increment_tag(stack: &mut Vec<(String, usize)>, tag: &str) -> usize {
+fn increment_tag(stack: &mut [(String, usize)], tag: &str) -> usize {
     if let Some((last_tag, count)) = stack.last_mut() {
         if last_tag == tag {
             *count += 1;

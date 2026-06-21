@@ -103,7 +103,7 @@ fn analyze_html(html: &str) -> Result<()> {
         println!("  Note: Page appears to be a default/welcome page");
     }
 
-    let stripped = html.replace(|c: char| c == '<' || c == '>', " ");
+    let stripped = html.replace(['<', '>'], " ");
     let word_count = stripped.split_whitespace().count();
     println!("  Words:        ~{}", word_count);
 
@@ -177,7 +177,7 @@ fn describe_file(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn extract_between<'a>(text: &'a str, start: &str, end: &str) -> Option<String> {
+fn extract_between(text: &str, start: &str, end: &str) -> Option<String> {
     let start_pos = text.find(start)?;
     let from_start = &text[start_pos + start.len()..];
     let end_pos = from_start.find('>')?;
