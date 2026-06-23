@@ -88,6 +88,8 @@ DOM database: `~/.autonomic/memory/eyes_dom.db`
 | `agent-eyes serve` | HTTP daemon on port 3105 |
 | `agent-eyes status` | Show config, DOM stats, VLM state |
 
+Global `--progress` (or `AGENT_PROGRESS=1`) enables structured ProgressTree CLI output.
+
 ---
 
 ## HTTP API
