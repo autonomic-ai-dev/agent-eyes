@@ -1,8 +1,10 @@
 # agent-eyes — Observability and Visual QA
 
-**Screenshot capture, pixel diff, DOM indexing, structure extraction, and local VLM-based image description.**
+**Cloud-Native role: Observability** (traces + visual state) — capture, DOM index, structure extraction, and visual regression checks.
 
-agent-eyes is the **visual cortex** of the Autonomic AI ecosystem. It gives AI agents the ability to "see" web pages and UIs — capturing screenshots, detecting visual regressions through pixel comparison, indexing DOM elements into a searchable SQLite database, and optionally describing images with a local LLaVA vision model.
+agent-eyes provides **state extraction** for agent-observable UIs — screenshots, pixel diff, DOM indexing into SQLite, and optional local VLM description. It answers "what did the agent change on screen?" without sending pixels to the cloud.
+
+> Codename: *eyes organ*. Mapping: [cloud-native-platform.md](https://github.com/autonomic-ai-dev/agent-body/blob/master/docs/cloud-native-platform.md)
 
 The key design: **structure first, pixels second.** DOM indexing and structure extraction (`describe`) work without a browser — they parse HTML directly into queryable element databases. Screenshot capture and pixel diff add the visual layer on top. The local VLM (LLaVA via Candle) ensures images never leave the machine.
 
