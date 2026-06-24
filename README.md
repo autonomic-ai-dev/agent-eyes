@@ -1,26 +1,24 @@
-# agent-eyes — Observability and Visual QA
+# agent-eyes — UI Observability and Visual QA
 
-**Cloud-Native role: Observability** (traces + visual state) — capture, DOM index, structure extraction, and visual regression checks.
+**Cloud-Native role: Observability** (traces + visual state) — DOM indexing, headless structure extraction, and OpenTelemetry integrations.
 
-agent-eyes provides **state extraction** for agent-observable UIs — screenshots, pixel diff, DOM indexing into SQLite, and optional local VLM description. It answers "what did the agent change on screen?" without sending pixels to the cloud.
-
-> Codename: *eyes organ*. Mapping: [cloud-native-platform.md](https://github.com/autonomic-ai-dev/agent-body/blob/master/docs/cloud-native-platform.md)
-
-The key design: **structure first, pixels second.** DOM indexing and structure extraction (`describe`) work without a browser — they parse HTML directly into queryable element databases. Screenshot capture and pixel diff add the visual layer on top. The local VLM (LLaVA via Candle) ensures images never leave the machine.
+`agent-eyes` provides **state extraction** for agent-observable UIs. Agents operating on web applications need to verify UI changes, but re-parsing a massive HTML payload on every LLM turn wastes context limits. `agent-eyes` solves this by aggressively indexing DOM state into local SQLite databases and broadcasting UI regressions via OpenTelemetry.
 
 ---
 
-## Core Concept
+## Under the Hood: How it Works
 
-AI agents are blind by default. They can read code but cannot see what the UI looks like, whether a button moved, or whether a regression introduced a visual bug.
+### 1. Headless Structure Extraction
+Instead of launching a massive headless browser (like Puppeteer/Playwright) just to verify a button exists, `agent-eyes` parses raw HTML strings natively in Rust. It rapidly extracts headings, links, forms, and interactive elements into a compressed JSON structure (`describe`) fast enough to run on every single agent turn.
 
-agent-eyes bridges this gap with four capabilities that compose:
+### 2. DOM Indexing (SQLite)
+When an agent is crawling a complex web app, `agent-eyes` indexes the precise element locations and hierarchy into a local SQLite database (`dom index`). The agent can then use fast SQL queries to find specific elements (e.g., "find all buttons with text 'Submit'") without needing to process the entire DOM in its context window.
 
-1. **Structure extraction** (`describe`) — parse HTML headings, links, forms, and interactive elements without a browser. Fast enough for every turn.
-2. **DOM indexing** (`dom index`) — persist element locations in SQLite for precise targeting without re-parsing the page.
-3. **Screenshot capture** (`capture`) — render a URL to a PNG for visual inspection and archiving.
-4. **Pixel diff** (`diff`) — compare two screenshots with diff image output for regression detection.
-5. **Local VLM** (`vlm describe`) — describe images on-device via LLaVA (optional, feature-gated).
+### 3. OpenTelemetry Integration
+When `agent-eyes` detects a visual UI regression (via pixel diffing or DOM comparison), it doesn't just print to the console. It broadcasts a structured event over the NATS JetStream bus and records an OpenTelemetry trace. This allows the Autonomic CI Dashboard to visualize exactly which LLM action broke the UI layout in real-time.
+
+### 4. Local VLM (Zero-Data-Leak Vision)
+If an agent needs to "look" at a generated screenshot, sending the image to OpenAI is a massive data leak for enterprise apps. `agent-eyes` optionally boots a local **LLaVA model** via the Candle framework, generating high-quality image captions natively on-device.
 
 ```mermaid
 flowchart LR
