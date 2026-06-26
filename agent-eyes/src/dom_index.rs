@@ -179,8 +179,8 @@ pub fn search(query: &str, limit: u32) -> Result<Vec<DomSearchHit>> {
     rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
 }
 
-#[derive(Debug, Clone)]
-struct ParsedElement {
+#[derive(Debug, Clone, Serialize)]
+pub struct ParsedElement {
     tag: String,
     element_id: Option<String>,
     class_name: Option<String>,
@@ -188,7 +188,7 @@ struct ParsedElement {
     path: String,
 }
 
-fn parse_dom_elements(html: &str, max_elements: usize) -> Vec<ParsedElement> {
+pub fn parse_dom_elements(html: &str, max_elements: usize) -> Vec<ParsedElement> {
     let mut out = Vec::new();
     let mut path_stack: Vec<(String, usize)> = Vec::new();
     let bytes = html.as_bytes();
