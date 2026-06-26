@@ -59,7 +59,9 @@ struct VlmCaptionParams {
 
 #[tool(tool_box)]
 impl EyesMcp {
-    #[tool(description = "Parse raw HTML into a token-efficient JSON layout of interactive elements")]
+    #[tool(
+        description = "Parse raw HTML into a token-efficient JSON layout of interactive elements"
+    )]
     async fn eyes_describe_dom(
         &self,
         #[tool(aggr)] params: DescribeDomParams,
@@ -85,14 +87,18 @@ impl EyesMcp {
         let capture_path = crate::verify::baseline_dir().join("mcp_capture.png");
 
         if let Err(e) = crate::capture::capture_url(&params.url, &capture_path).await {
-            return Err(McpError::internal_error(format!("capture failed: {e}"), None));
+            return Err(McpError::internal_error(
+                format!("capture failed: {e}"),
+                None,
+            ));
         }
 
         if !baseline_path.exists() {
             if let Err(e) = std::fs::copy(&capture_path, &baseline_path) {
-                return Err(
-                    McpError::internal_error(format!("seed baseline failed: {e}"), None),
-                );
+                return Err(McpError::internal_error(
+                    format!("seed baseline failed: {e}"),
+                    None,
+                ));
             }
             let result = serde_json::json!({
                 "status": "baseline_seeded",
@@ -137,8 +143,8 @@ impl EyesMcp {
             .await
         {
             Ok(result) => {
-                let text = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| "{}".to_string());
+                let text =
+                    serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string());
                 Ok(CallToolResult::success(vec![Content::text(text)]))
             }
             Err(e) => Err(McpError::internal_error(format!("{e}"), None)),
