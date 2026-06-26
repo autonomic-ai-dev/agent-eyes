@@ -4,6 +4,7 @@ pub mod describe;
 pub mod diff;
 pub mod dom_index;
 pub mod log;
+pub mod mcp_server;
 pub mod serve;
 pub mod spine;
 pub mod update;

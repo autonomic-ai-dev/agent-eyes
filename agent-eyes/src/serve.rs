@@ -35,6 +35,12 @@ pub async fn start(config: Config) -> anyhow::Result<()> {
     });
 
     let port = config.server.port;
+
+    let mcp_config = config.clone();
+    tokio::spawn(async move {
+        crate::mcp_server::EyesMcp::run(mcp_config).await.ok();
+    });
+
     let state = Arc::new(AppState { config, spine });
 
     let app = Router::new()
