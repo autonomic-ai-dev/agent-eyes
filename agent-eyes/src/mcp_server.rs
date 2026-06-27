@@ -59,7 +59,9 @@ struct VlmCaptionParams {
 
 #[tool(tool_box)]
 impl EyesMcp {
-    #[tool(description = "Parse raw HTML into a token-efficient JSON layout of interactive elements")]
+    #[tool(
+        description = "Parse raw HTML into a token-efficient JSON layout of interactive elements"
+    )]
     async fn eyes_describe_dom(
         &self,
         #[tool(aggr)] params: DescribeDomParams,
@@ -85,14 +87,18 @@ impl EyesMcp {
         let capture_path = crate::verify::baseline_dir().join("mcp_capture.png");
 
         if let Err(e) = crate::capture::capture_url(&params.url, &capture_path).await {
-            return Err(McpError::internal_error(format!("capture failed: {e}"), None));
+            return Err(McpError::internal_error(
+                format!("capture failed: {e}"),
+                None,
+            ));
         }
 
         if !baseline_path.exists() {
             if let Err(e) = std::fs::copy(&capture_path, &baseline_path) {
-                return Err(
-                    McpError::internal_error(format!("seed baseline failed: {e}"), None),
-                );
+                return Err(McpError::internal_error(
+                    format!("seed baseline failed: {e}"),
+                    None,
+                ));
             }
             let result = serde_json::json!({
                 "status": "baseline_seeded",
@@ -137,8 +143,8 @@ impl EyesMcp {
             .await
         {
             Ok(result) => {
-                let text = serde_json::to_string_pretty(&result)
-                    .unwrap_or_else(|_| "{}".to_string());
+                let text =
+                    serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string());
                 Ok(CallToolResult::success(vec![Content::text(text)]))
             }
             Err(e) => Err(McpError::internal_error(format!("{e}"), None)),
@@ -156,5 +162,52 @@ impl ServerHandler for EyesMcp {
             ),
             ..Default::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rmcp::model::RawContent;
+
+    #[tokio::test]
+    async fn eyes_describe_dom_parses_simple_html() {
+        let mcp = EyesMcp::new(Config::default());
+        let params = DescribeDomParams {
+            html: "<html><body><a href='/test'>click</a></body></html>".into(),
+            max_elements: 100,
+        };
+        let result = mcp.eyes_describe_dom(params).await.unwrap();
+        let text = result.content.iter()
+            .filter_map(|c| if let RawContent::Text(t) = &c.raw { Some(&t.text[..]) } else { None })
+            .collect::<Vec<_>>()
+            .join("");
+        assert!(text.contains("\"tag\": \"a\""), "expected anchor tag in {text}");
+        assert!(text.contains("click"), "expected link text in {text}");
+    }
+
+    #[tokio::test]
+    async fn eyes_describe_dom_bare_html_includes_root() {
+        let mcp = EyesMcp::new(Config::default());
+        let params = DescribeDomParams {
+            html: "<html></html>".into(),
+            max_elements: 100,
+        };
+        let result = mcp.eyes_describe_dom(params).await.unwrap();
+        let text = result.content.iter()
+            .filter_map(|c| if let RawContent::Text(t) = &c.raw { Some(&t.text[..]) } else { None })
+            .collect::<Vec<_>>()
+            .join("");
+        assert!(text.contains("\"tag\": \"html\""), "expected html root tag in {text}");
+    }
+
+    #[test]
+    fn default_max_elements_is_5000() {
+        assert_eq!(default_max_elements(), 5000);
+    }
+
+    #[test]
+    fn default_diff_threshold_is_1_0() {
+        assert_eq!(default_diff_threshold(), 1.0);
     }
 }

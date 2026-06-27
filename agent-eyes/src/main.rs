@@ -34,8 +34,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Start telemetry daemon
+    /// Start telemetry daemon (HTTP + MCP server)
     Serve,
+    /// Start the MCP stdio server only (no HTTP daemon)
+    ServeMcp,
     /// Capture a screenshot of a URL
     Capture {
         /// URL to capture
@@ -152,6 +154,10 @@ async fn main() -> anyhow::Result<()> {
         Commands::Serve => {
             let config = agent_eyes::config::Config::load()?;
             agent_eyes::serve::start(config).await?;
+        }
+        Commands::ServeMcp => {
+            let config = agent_eyes::config::Config::load()?;
+            agent_eyes::mcp_server::EyesMcp::run(config).await?;
         }
         Commands::Capture { url, output } => {
             agent_eyes::capture::capture_url(&url, &output).await?;

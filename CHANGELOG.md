@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.7] - 2026-06-27
+
+### Added
+
+- **`serve-mcp` subcommand** — starts the MCP stdio server only (no HTTP daemon). Used by `agent-body serve-mcp` gateway for persistent tool aggregation.
+- **Integration tests** — `ServeMcp` CLI parsing, `EyesMcp` tool handler response validation (DOM describe, diff screenshots)
+
+## [0.7.6] - 2026-06-27
+
+### Added
+
+- Dual-mode MCP server with organ tool naming convention (`eyes_describe_dom`, `eyes_diff_screenshots`, `eyes_vlm_caption`)
+
 ## [0.7.5] - 2026-06-23
 
 ### Added

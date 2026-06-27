@@ -86,6 +86,7 @@ DOM database: `~/.autonomic/memory/eyes_dom.db`
 | `agent-eyes dom index\|file\|stats\|search` | SQLite DOM index management |
 | `agent-eyes vlm describe\|status` | Local LLaVA (requires `--features vlm`) |
 | `agent-eyes serve` | HTTP daemon on port 3105 |
+| `agent-eyes serve-mcp` | Start MCP stdio server only (no HTTP daemon) |
 | `agent-eyes status` | Show config, DOM stats, VLM state |
 
 Global `--progress` (or `AGENT_PROGRESS=1`) enables structured ProgressTree CLI output.
