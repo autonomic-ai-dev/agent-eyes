@@ -164,3 +164,50 @@ impl ServerHandler for EyesMcp {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rmcp::model::RawContent;
+
+    #[tokio::test]
+    async fn eyes_describe_dom_parses_simple_html() {
+        let mcp = EyesMcp::new(Config::default());
+        let params = DescribeDomParams {
+            html: "<html><body><a href='/test'>click</a></body></html>".into(),
+            max_elements: 100,
+        };
+        let result = mcp.eyes_describe_dom(params).await.unwrap();
+        let text = result.content.iter()
+            .filter_map(|c| if let RawContent::Text(t) = &c.raw { Some(&t.text[..]) } else { None })
+            .collect::<Vec<_>>()
+            .join("");
+        assert!(text.contains("\"tag\": \"a\""), "expected anchor tag in {text}");
+        assert!(text.contains("click"), "expected link text in {text}");
+    }
+
+    #[tokio::test]
+    async fn eyes_describe_dom_bare_html_includes_root() {
+        let mcp = EyesMcp::new(Config::default());
+        let params = DescribeDomParams {
+            html: "<html></html>".into(),
+            max_elements: 100,
+        };
+        let result = mcp.eyes_describe_dom(params).await.unwrap();
+        let text = result.content.iter()
+            .filter_map(|c| if let RawContent::Text(t) = &c.raw { Some(&t.text[..]) } else { None })
+            .collect::<Vec<_>>()
+            .join("");
+        assert!(text.contains("\"tag\": \"html\""), "expected html root tag in {text}");
+    }
+
+    #[test]
+    fn default_max_elements_is_5000() {
+        assert_eq!(default_max_elements(), 5000);
+    }
+
+    #[test]
+    fn default_diff_threshold_is_1_0() {
+        assert_eq!(default_diff_threshold(), 1.0);
+    }
+}
