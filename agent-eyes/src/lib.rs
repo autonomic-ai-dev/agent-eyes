@@ -11,3 +11,4 @@ pub mod spine;
 pub mod update;
 pub mod verify;
 pub mod vlm;
+pub mod phash_cascade;
