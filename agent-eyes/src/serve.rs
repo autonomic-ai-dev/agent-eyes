@@ -156,22 +156,28 @@ async fn dom_index_url(
     State(state): State<Arc<AppState>>,
     Json(req): Json<DomIndexRequest>,
 ) -> Json<serde_json::Value> {
-    match dom_index::index_url(&req.url, req.max_elements).await {
-        Ok(report) => {
-            let _ = state
-                .spine
-                .publish(
-                    "eyes.dom.indexed",
-                    &serde_json::json!({
-                        "url": report.url,
-                        "elements_indexed": report.elements_indexed,
-                    }),
-                )
-                .await;
-            Json(serde_json::json!({ "ok": true, "report": report }))
+    let url = req.url.clone();
+    let max_elements = req.max_elements;
+    let payload = crate::dom_diff_coalesce::coalesce_dom_index(&url, || async {
+        match dom_index::index_url(&url, max_elements).await {
+            Ok(report) => {
+                let _ = state
+                    .spine
+                    .publish(
+                        "eyes.dom.indexed",
+                        &serde_json::json!({
+                            "url": report.url,
+                            "elements_indexed": report.elements_indexed,
+                        }),
+                    )
+                    .await;
+                serde_json::json!({ "ok": true, "report": report })
+            }
+            Err(e) => serde_json::json!({ "ok": false, "error": e.to_string() }),
         }
-        Err(e) => Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
-    }
+    })
+    .await;
+    Json(payload)
 }
 
 async fn dom_stats(State(_): State<Arc<AppState>>) -> Json<serde_json::Value> {
