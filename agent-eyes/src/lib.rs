@@ -2,6 +2,7 @@ pub mod capture;
 pub mod config;
 pub mod describe;
 pub mod diff;
+pub mod dom_diff_coalesce;
 pub mod dom_index;
 pub mod log;
 pub mod mcp_server;
