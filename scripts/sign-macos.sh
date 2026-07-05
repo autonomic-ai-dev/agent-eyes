@@ -1,28 +1,37 @@
 #!/usr/bin/env bash
+# Sign a macOS release binary.
+# Prefers Developer ID Application when APPLE_IDENTITY is set or present in the keychain;
+# falls back to ad-hoc signing (codesign -s -) for local/dev builds.
 set -euo pipefail
 
-# Sign the macOS agent-eyes binary for distribution
-# Requires: APPLE_IDENTITY environment variable or first argument
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BIN="${1:-$ROOT/target/release/agent-eyes}"
 
-NAME="agent-eyes"
-BINARY="target/release/$NAME"
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "sign-macos.sh: skipped (not macOS)" >&2
+  exit 0
+fi
 
-if [ ! -f "$BINARY" ]; then
-  echo "ERROR: $BINARY not found. Run build first." >&2
+
+if [[ -z "$BIN" || ! -f "$BIN" ]]; then
+  echo "sign-macos.sh: binary not found: ${BIN:-<empty>}" >&2
+  echo "Usage: $0 <path-to-binary>" >&2
   exit 1
 fi
 
-IDENTITY="${1:-${APPLE_IDENTITY:-}}"
+xattr -cr "$BIN" 2>/dev/null || true
 
-if [ -z "$IDENTITY" ]; then
-  echo "Usage: $0 <apple-identity>"
-  echo "Set APPLE_IDENTITY env var or pass as first argument."
-  echo "Example: $0 'Developer ID Application: Your Name (TEAMID)'"
-  exit 1
+IDENTITY="${APPLE_IDENTITY:-}"
+if [[ -z "$IDENTITY" ]]; then
+  IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null     | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p'     | head -1 || true)"
 fi
 
-echo "Signing $BINARY with identity: $IDENTITY"
-codesign --force --options runtime --sign "$IDENTITY" "$BINARY"
-echo "Verifying signature..."
-codesign -dv --verbose=4 "$BINARY"
-echo "Signing complete."
+if [[ -n "$IDENTITY" ]]; then
+  codesign --force --options runtime --timestamp --sign "$IDENTITY" "$BIN"
+  codesign --verify --verbose "$BIN"
+  echo "Signed $BIN with $IDENTITY"
+else
+  codesign --force --sign - "$BIN"
+  codesign --verify --verbose "$BIN"
+  echo "Signed $BIN (adhoc)"
+fi
