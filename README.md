@@ -1,5 +1,7 @@
 # agent-eyes — UI Observability and Visual QA
 
+Agent context: [docs/CONTEXT.md](docs/CONTEXT.md).
+
 **Cloud-Native role: Observability** (traces + visual state) — DOM indexing, headless structure extraction, and OpenTelemetry integrations.
 
 `agent-eyes` provides **state extraction** for agent-observable UIs. Agents operating on web applications need to verify UI changes, but re-parsing a massive HTML payload on every LLM turn wastes context limits. `agent-eyes` solves this by aggressively indexing DOM state into local SQLite databases and broadcasting UI regressions via OpenTelemetry.
