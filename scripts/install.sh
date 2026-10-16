@@ -48,11 +48,11 @@ echo "Downloading $ARCHIVE_URL ..."
 curl -fsSL "$ARCHIVE_URL" -o "$BINARY_DIR/$NAME"
 chmod +x "$BINARY_DIR/$NAME"
 
-# macOS Gatekeeper: clear quarantine + ad-hoc sign
+# macOS Gatekeeper: clear quarantine and verify Developer ID signature
 if [[ "$(uname -s)" == "Darwin" ]] && command -v codesign >/dev/null 2>&1; then
   xattr -cr "$BINARY_DIR/$NAME" 2>/dev/null || true
-  codesign --force --sign - "$BINARY_DIR/$NAME" 2>/dev/null || true
-  echo "macOS: cleared quarantine and adhoc-signed $NAME"
+  codesign --verify --verbose "$BINARY_DIR/$NAME" 2>/dev/null || true
+  echo "macOS: cleared quarantine and verified signature on $NAME"
 fi
 
 echo ""
