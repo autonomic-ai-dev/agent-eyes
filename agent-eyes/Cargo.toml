@@ -1,6 +1,6 @@
 [package]
 name = "agent-eyes"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.3"
 edition = "2021"
 
 [features]
@@ -14,7 +14,7 @@ vlm = [
 ]
 
 [dependencies]
-agent-body-core = { git = "https://github.com/autonomic-ai-dev/agent-body", tag = "v1.0.0-beta.1" }
+agent-body-core = { git = "https://github.com/autonomic-ai-dev/agent-body", tag = "v1.0.0-beta.3" }
 anyhow = "1"
 axum = "0.7"
 chrono = "0.4"
