@@ -7,7 +7,8 @@ UI observability and visual QA for Autonomic. Part of [agent-body](https://githu
 | Role | Observability / visual state |
 | Binary | `agent-eyes` |
 | HTTP | `:3105` |
-| Version | 0.9.0+ |
+| Version | v1.0.0-beta.2 |
+| Docs Hub | [https://autonomic-ai.dev/docs/visual-qa](https://autonomic-ai.dev/docs/visual-qa) · [Architecture](https://autonomic-ai.dev/docs/architecture) |
 
 ## When to use
 
@@ -33,4 +34,4 @@ Path filter on `agent-eyes/**` + Cargo/Makefile/scripts/`.github`. Docs-only PRs
 
 ## Related
 
-Spine (UI QA nodes) · mouth (summaries) · brain (verify)
+Operator usage: [https://autonomic-ai.dev/docs/visual-qa](https://autonomic-ai.dev/docs/visual-qa) · Architecture: [https://autonomic-ai.dev/docs/architecture](https://autonomic-ai.dev/docs/architecture) · Spine (UI QA nodes) · mouth (summaries) · brain (verify)

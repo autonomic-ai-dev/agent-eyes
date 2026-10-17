@@ -1,6 +1,6 @@
 # agent-eyes — UI Observability and Visual QA
 
-Agent context: [docs/CONTEXT.md](docs/CONTEXT.md) · Architecture: [https://autonomic-ai.dev/docs/architecture](https://autonomic-ai.dev/docs/architecture).
+Agent context: [docs/CONTEXT.md](docs/CONTEXT.md) · Visual QA Guide: [https://autonomic-ai.dev/docs/visual-qa](https://autonomic-ai.dev/docs/visual-qa) · Architecture: [https://autonomic-ai.dev/docs/architecture](https://autonomic-ai.dev/docs/architecture).
 
 **Cloud-Native role: Observability** (traces + visual state) — DOM indexing, headless structure extraction, and OpenTelemetry integrations.
 
@@ -166,9 +166,11 @@ agent-eyes dom index http://127.0.0.1:8765/page.html
 
 ---
 
-## Architecture
+## Architecture & Documentation
 
-For the complete 11-organ architecture specification, data flows, and MCP tool contracts, see the centralized [Autonomic AI Architecture Hub](https://autonomic-ai.dev/docs/architecture).
+For complete architectural specifications, DOM SQLite schemas, and MCP tool contracts, visit the centralized documentation hub:
+- **Visual QA & DOM Indexing Guide**: [https://autonomic-ai.dev/docs/visual-qa](https://autonomic-ai.dev/docs/visual-qa)
+- **Ecosystem Architecture**: [https://autonomic-ai.dev/docs/architecture](https://autonomic-ai.dev/docs/architecture)
 
 ---
 
