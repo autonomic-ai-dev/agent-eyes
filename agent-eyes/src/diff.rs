@@ -89,7 +89,13 @@ mod tests {
 
     #[test]
     fn test_identical_images() {
-        let dir = std::env::temp_dir().join("agent_eyes_test");
+        let dir = std::env::temp_dir().join(format!(
+            "agent_eyes_test_ident_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let ref_path = dir.join("identical_ref.png");
         let comp_path = dir.join("identical_comp.png");
@@ -106,7 +112,13 @@ mod tests {
 
     #[test]
     fn test_different_images() {
-        let dir = std::env::temp_dir().join("agent_eyes_test");
+        let dir = std::env::temp_dir().join(format!(
+            "agent_eyes_test_diff_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let ref_path = dir.join("diff_ref.png");
         let comp_path = dir.join("diff_comp.png");
@@ -125,7 +137,13 @@ mod tests {
 
     #[test]
     fn test_different_dimensions() {
-        let dir = std::env::temp_dir().join("agent_eyes_test");
+        let dir = std::env::temp_dir().join(format!(
+            "agent_eyes_test_dims_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let ref_path = dir.join("dims_ref.png");
         let comp_path = dir.join("dims_comp.png");

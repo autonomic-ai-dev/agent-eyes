@@ -44,7 +44,13 @@ where
     let value = fresh().await;
     let mut guard = PENDING.lock().unwrap();
     if let Some(map) = guard.as_mut() {
-        map.insert(key, Pending { at: now, value: value.clone() });
+        map.insert(
+            key,
+            Pending {
+                at: now,
+                value: value.clone(),
+            },
+        );
     }
     value
 }

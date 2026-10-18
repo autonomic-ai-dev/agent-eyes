@@ -178,11 +178,22 @@ mod tests {
             max_elements: 100,
         };
         let result = mcp.eyes_describe_dom(params).await.unwrap();
-        let text = result.content.iter()
-            .filter_map(|c| if let RawContent::Text(t) = &c.raw { Some(&t.text[..]) } else { None })
+        let text = result
+            .content
+            .iter()
+            .filter_map(|c| {
+                if let RawContent::Text(t) = &c.raw {
+                    Some(&t.text[..])
+                } else {
+                    None
+                }
+            })
             .collect::<Vec<_>>()
             .join("");
-        assert!(text.contains("\"tag\": \"a\""), "expected anchor tag in {text}");
+        assert!(
+            text.contains("\"tag\": \"a\""),
+            "expected anchor tag in {text}"
+        );
         assert!(text.contains("click"), "expected link text in {text}");
     }
 
@@ -194,11 +205,22 @@ mod tests {
             max_elements: 100,
         };
         let result = mcp.eyes_describe_dom(params).await.unwrap();
-        let text = result.content.iter()
-            .filter_map(|c| if let RawContent::Text(t) = &c.raw { Some(&t.text[..]) } else { None })
+        let text = result
+            .content
+            .iter()
+            .filter_map(|c| {
+                if let RawContent::Text(t) = &c.raw {
+                    Some(&t.text[..])
+                } else {
+                    None
+                }
+            })
             .collect::<Vec<_>>()
             .join("");
-        assert!(text.contains("\"tag\": \"html\""), "expected html root tag in {text}");
+        assert!(
+            text.contains("\"tag\": \"html\""),
+            "expected html root tag in {text}"
+        );
     }
 
     #[test]

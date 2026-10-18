@@ -40,7 +40,11 @@ pub enum CascadeDecision {
 }
 
 #[must_use]
-pub fn decide_cascade(prev_hash: Option<u64>, current_hash: u64, roi_changed: bool) -> CascadeDecision {
+pub fn decide_cascade(
+    prev_hash: Option<u64>,
+    current_hash: u64,
+    roi_changed: bool,
+) -> CascadeDecision {
     if let Some(prev) = prev_hash {
         if hamming(prev, current_hash) <= PHASH_HAMMING_SKIP && !roi_changed {
             return CascadeDecision::SkipVlmReuseCaption;
@@ -53,7 +57,11 @@ pub fn decide_cascade(prev_hash: Option<u64>, current_hash: u64, roi_changed: bo
     }
 }
 
-pub fn roi_changed(prev: &DynamicImage, current: &DynamicImage, threshold_pct: f64) -> Result<bool> {
+pub fn roi_changed(
+    prev: &DynamicImage,
+    current: &DynamicImage,
+    threshold_pct: f64,
+) -> Result<bool> {
     let (w, h) = prev.dimensions();
     let cur = current.resize_exact(w, h, image::imageops::FilterType::Nearest);
     let mut diff = 0u64;
@@ -74,7 +82,7 @@ pub fn roi_changed(prev: &DynamicImage, current: &DynamicImage, threshold_pct: f
 fn pixel_delta(a: Rgba<u8>, b: Rgba<u8>) -> u16 {
     a.0.iter()
         .zip(b.0.iter())
-        .map(|(x, y)| (*x as i16 - *y as i16).unsigned_abs() as u16)
+        .map(|(x, y)| (*x as i16 - *y as i16).unsigned_abs())
         .sum()
 }
 
@@ -90,6 +98,9 @@ mod tests {
         let h1 = phash64(&dyn_img);
         let h2 = phash64(&DynamicImage::ImageRgba8(img));
         assert_eq!(h1, h2);
-        assert_eq!(decide_cascade(Some(h1), h2, false), CascadeDecision::SkipVlmReuseCaption);
+        assert_eq!(
+            decide_cascade(Some(h1), h2, false),
+            CascadeDecision::SkipVlmReuseCaption
+        );
     }
 }
