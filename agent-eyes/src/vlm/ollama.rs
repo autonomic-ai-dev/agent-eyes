@@ -85,7 +85,7 @@ mod tests {
         let config = VlmConfig::default();
         let body = request_body(&config, "Describe.", b"png-bytes");
         let json = serde_json::to_value(&body).unwrap();
-        assert_eq!(json["model"], "llava");
+        assert_eq!(json["model"], "qwen2.5vl:7b");
         assert_eq!(json["stream"], false);
         assert_eq!(json["images"][0], "cG5nLWJ5dGVz");
         assert_eq!(json["options"]["num_predict"], 256);

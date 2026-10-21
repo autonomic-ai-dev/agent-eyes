@@ -43,7 +43,7 @@ fn default_ollama_url() -> String {
 }
 
 fn default_ollama_model() -> String {
-    "llava".into()
+    "qwen2.5vl:7b".into()
 }
 
 fn default_vlm_model() -> String {

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+
+### Added
+- **Ollama VLM backend** — `[vlm] backend = "ollama"` (default target) sends screenshots to a local Ollama server. Settings: `ollama_url`, `ollama_model` (default `qwen2.5vl:7b`).
+- **Real screenshot capture** — `capture` uses Playwright (`npx playwright@1.55.0 screenshot`) and checks the PNG signature.
+
+### Changed
+- `vlm` backend is selected with `backend = "candle"`; LLaVA-NeXT is not supported there because candle 0.8.4 fails in its multi-patch encode.
+
 ## [1.0.0-beta.3.1] - 2026-10-18
 
 ### Fixed
