@@ -47,14 +47,20 @@ pub fn describe(image_path: &Path, prompt: &str, config: &VlmConfig) -> Result<V
 
     let prompt_text = build_prompt(prompt, &llava_config);
     let conv_mode = conv_mode_for_model(&config.model_id);
-    let mut conv = match conv_mode {
-        "chatml_direct" => Conversation::conv_chatml_direct(),
-        "llava_v1" => Conversation::conv_llava_v1(),
+    let full_prompt = match conv_mode {
+        "mistral_instruct" => format!("[INST] {prompt_text} [/INST]"),
+        "chatml_direct" | "llava_v1" => {
+            let mut conv = if conv_mode == "chatml_direct" {
+                Conversation::conv_chatml_direct()
+            } else {
+                Conversation::conv_llava_v1()
+            };
+            conv.append_user_message(Some(&prompt_text));
+            conv.append_assistant_message(None);
+            conv.get_prompt()
+        }
         other => bail!("unsupported conv mode {other}"),
     };
-    conv.append_user_message(Some(&prompt_text));
-    conv.append_assistant_message(None);
-    let full_prompt = conv.get_prompt();
 
     let (image_size, image_tensor) =
         load_image_tensor(image_path, &image_processor, &llava_config, dtype)?;
@@ -155,16 +161,16 @@ fn load_hf_config(
     if let Some(dir) = config.model_dir.as_deref() {
         let path = PathBuf::from(dir);
         let config_filename = path.join("config.json");
-        let hf_llava_config: HFLLaVAConfig = serde_json::from_slice(
+        let hf_llava_config = parse_hf_llava_config(
             &std::fs::read(&config_filename)
                 .with_context(|| format!("read {}", config_filename.display()))?,
         )?;
         let generation_config_filename = path.join("generation_config.json");
-        let generation_config: HFGenerationConfig =
-            serde_json::from_slice(&std::fs::read(&generation_config_filename)?)?;
+        let generation_config =
+            parse_hf_generation_config(&std::fs::read(&generation_config_filename)?)?;
         let preprocessor_config_filename = path.join("preprocessor_config.json");
-        let preprocessor_config: HFPreProcessorConfig =
-            serde_json::from_slice(&std::fs::read(&preprocessor_config_filename)?)?;
+        let preprocessor_config =
+            parse_hf_preprocessor_config(&std::fs::read(&preprocessor_config_filename)?)?;
         let llava_config =
             hf_llava_config.to_llava_config(&generation_config, &preprocessor_config);
         let tokenizer = Tokenizer::from_file(path.join("tokenizer.json"))
@@ -181,13 +187,13 @@ fn load_hf_config(
 
     let api = Api::new()?.model(config.model_id.clone());
     let config_filename = api.get("config.json")?;
-    let hf_llava_config: HFLLaVAConfig = serde_json::from_slice(&std::fs::read(config_filename)?)?;
+    let hf_llava_config = parse_hf_llava_config(&std::fs::read(config_filename)?)?;
     let generation_config_filename = api.get("generation_config.json")?;
-    let generation_config: HFGenerationConfig =
-        serde_json::from_slice(&std::fs::read(generation_config_filename)?)?;
+    let generation_config =
+        parse_hf_generation_config(&std::fs::read(generation_config_filename)?)?;
     let preprocessor_config_filename = api.get("preprocessor_config.json")?;
-    let preprocessor_config: HFPreProcessorConfig =
-        serde_json::from_slice(&std::fs::read(preprocessor_config_filename)?)?;
+    let preprocessor_config =
+        parse_hf_preprocessor_config(&std::fs::read(preprocessor_config_filename)?)?;
     let llava_config = hf_llava_config.to_llava_config(&generation_config, &preprocessor_config);
     let tokenizer_filename = api.get("tokenizer.json")?;
     let tokenizer = Tokenizer::from_file(tokenizer_filename).map_err(|e| anyhow::anyhow!("{e}"))?;
@@ -199,6 +205,48 @@ fn load_hf_config(
         Some(clip_vision_config),
         image_processor,
     ))
+}
+
+fn parse_hf_generation_config(raw: &[u8]) -> Result<HFGenerationConfig> {
+    let mut value: serde_json::Value = serde_json::from_slice(raw)?;
+    let Some(root) = value.as_object_mut() else {
+        bail!("LLaVA generation config must be a JSON object");
+    };
+    root.entry("pad_token_id").or_insert(serde_json::json!(0));
+    Ok(serde_json::from_value(value)?)
+}
+
+fn parse_hf_preprocessor_config(raw: &[u8]) -> Result<HFPreProcessorConfig> {
+    let mut value: serde_json::Value = serde_json::from_slice(raw)?;
+    let Some(root) = value.as_object_mut() else {
+        bail!("LLaVA preprocessor config must be a JSON object");
+    };
+    root.entry("aspect_ratio_setting")
+        .or_insert(serde_json::json!("square"));
+    Ok(serde_json::from_value(value)?)
+}
+
+fn parse_hf_llava_config(raw: &[u8]) -> Result<HFLLaVAConfig> {
+    let mut value: serde_json::Value = serde_json::from_slice(raw)?;
+    let pad = value
+        .get("pad_token_id")
+        .cloned()
+        .unwrap_or(serde_json::json!(0));
+    let dtype = value.get("torch_dtype").cloned();
+    let Some(root) = value.as_object_mut() else {
+        bail!("LLaVA config must be a JSON object");
+    };
+    if let Some(text) = root.get_mut("text_config").and_then(|t| t.as_object_mut()) {
+        text.entry("pad_token_id").or_insert(pad);
+        if let Some(dtype) = dtype {
+            text.entry("torch_dtype").or_insert(dtype);
+        }
+    }
+    root.entry("image_grid_pinpoints")
+        .or_insert(serde_json::json!([[336, 336]]));
+    root.entry("use_image_newline_parameter")
+        .or_insert(serde_json::json!(false));
+    Ok(serde_json::from_value(value)?)
 }
 
 fn load_weights(config: &VlmConfig) -> Result<Vec<PathBuf>> {
@@ -306,4 +354,139 @@ fn tokenizer_image_token(
     }
     let input_len = input_ids.len();
     Tensor::from_vec(input_ids, (1, input_len), &Device::Cpu)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_hf_llava_config;
+
+    const LLAVA_1_5_CONFIG: &str = r#"{
+      "architectures": ["LlavaForConditionalGeneration"],
+      "ignore_index": -100,
+      "image_token_index": 32000,
+      "model_type": "llava",
+      "pad_token_id": 32001,
+      "projector_hidden_act": "gelu",
+      "text_config": {
+        "_name_or_path": "lmsys/vicuna-7b-v1.5",
+        "architectures": ["LlamaForCausalLM"],
+        "max_position_embeddings": 4096,
+        "model_type": "llama",
+        "rms_norm_eps": 1e-05,
+        "torch_dtype": "float16",
+        "vocab_size": 32064
+      },
+      "tie_word_embeddings": false,
+      "torch_dtype": "float16",
+      "transformers_version": "4.36.0.dev0",
+      "vision_config": {
+        "hidden_size": 1024,
+        "image_size": 336,
+        "intermediate_size": 4096,
+        "model_type": "clip_vision_model",
+        "num_attention_heads": 16,
+        "num_hidden_layers": 24,
+        "patch_size": 14,
+        "projection_dim": 768,
+        "vocab_size": 32000
+      },
+      "vision_feature_layer": -2,
+      "vision_feature_select_strategy": "default",
+      "vocab_size": 32064
+    }"#;
+
+    #[test]
+    fn text_config_without_pad_token_inherits_the_top_level_value() {
+        assert!(parse_hf_llava_config(LLAVA_1_5_CONFIG.as_bytes()).is_ok());
+    }
+
+    const LLAVA_NEXT_MISTRAL_CONFIG: &str = r#"{
+      "architectures": ["LlavaNextForConditionalGeneration"],
+      "ignore_index": -100,
+      "image_grid_pinpoints": [[336, 672], [672, 336], [672, 672], [1008, 336], [336, 1008]],
+      "image_token_index": 32000,
+      "model_type": "llava_next",
+      "projector_hidden_act": "gelu",
+      "text_config": {
+        "_name_or_path": "mistralai/Mistral-7B-Instruct-v0.2",
+        "architectures": ["MistralForCausalLM"],
+        "intermediate_size": 14336,
+        "max_position_embeddings": 32768,
+        "model_type": "mistral",
+        "num_key_value_heads": 8,
+        "rms_norm_eps": 1e-05,
+        "rope_theta": 1000000.0,
+        "sliding_window": null,
+        "vocab_size": 32064
+      },
+      "torch_dtype": "float16",
+      "use_image_newline_parameter": true,
+      "vision_config": {
+        "hidden_size": 1024,
+        "image_size": 336,
+        "intermediate_size": 4096,
+        "model_type": "clip_vision_model",
+        "num_attention_heads": 16,
+        "num_hidden_layers": 24,
+        "patch_size": 14,
+        "projection_dim": 768,
+        "vocab_size": 32000
+      },
+      "vision_feature_layer": -2,
+      "vision_feature_select_strategy": "default",
+      "vocab_size": 32064
+    }"#;
+
+    #[test]
+    fn llava_next_mistral_config_parses_without_any_pad_token_id() {
+        assert!(parse_hf_llava_config(LLAVA_NEXT_MISTRAL_CONFIG.as_bytes()).is_ok());
+    }
+
+    #[test]
+    fn llava_next_generation_config_without_pad_token_parses() {
+        let raw = r#"{
+          "_from_model_config": true,
+          "bos_token_id": 1,
+          "eos_token_id": 2,
+          "transformers_version": "4.39.0.dev0"
+        }"#;
+        assert!(super::parse_hf_generation_config(raw.as_bytes()).is_ok());
+    }
+
+    #[test]
+    fn model_ids_map_to_their_prompt_templates() {
+        assert_eq!(
+            super::conv_mode_for_model("llava-hf/llava-v1.6-mistral-7b-hf"),
+            "mistral_instruct"
+        );
+        assert_eq!(
+            super::conv_mode_for_model("llava-hf/llava-1.5-7b-hf"),
+            "llava_v1"
+        );
+    }
+
+    #[test]
+    fn invalid_json_is_an_error() {
+        assert!(parse_hf_llava_config(b"{not json").is_err());
+    }
+
+    #[test]
+    fn llava_1_5_preprocessor_config_parses_without_aspect_ratio_setting() {
+        let raw = r#"{
+          "crop_size": {"height": 336, "width": 336},
+          "do_center_crop": true,
+          "do_convert_rgb": true,
+          "do_normalize": true,
+          "do_rescale": true,
+          "do_resize": true,
+          "image_mean": [0.48145466, 0.4578275, 0.40821073],
+          "image_processor_type": "CLIPImageProcessor",
+          "image_std": [0.26862954, 0.26130258, 0.27577711],
+          "processor_class": "LlavaProcessor",
+          "resample": 3,
+          "rescale_factor": 0.00392156862745098,
+          "size": {"shortest_edge": 336}
+        }"#;
+        assert!(super::parse_hf_preprocessor_config(raw.as_bytes()).is_ok());
+    }
 }

@@ -20,7 +20,7 @@ When an agent is crawling a complex web app, `agent-eyes` indexes the precise el
 When `agent-eyes` detects a visual UI regression (via pixel diffing or DOM comparison), it doesn't just print to the console. It broadcasts a structured event over the NATS JetStream bus and records an OpenTelemetry trace. This allows the Autonomic CI Dashboard to visualize exactly which LLM action broke the UI layout in real-time.
 
 ### 4. Local VLM (Zero-Data-Leak Vision)
-If an agent needs to "look" at a generated screenshot, sending the image to OpenAI is a massive data leak for enterprise apps. `agent-eyes` optionally boots a local **LLaVA model** via the Candle framework, generating high-quality image captions natively on-device.
+If an agent needs to "look" at a generated screenshot, sending the image to OpenAI is a massive data leak for enterprise apps. `agent-eyes` sends the image to a **local Ollama server** running a vision model (default `qwen2.5vl:7b`), so the caption is generated on-device and the image never leaves the machine.
 
 ```mermaid
 flowchart LR
@@ -29,7 +29,7 @@ flowchart LR
     Input --> Index["dom index<br>SQLite element DB"]
 
     Capture --> Diff["diff<br>Pixel comparison"]
-    Capture --> VLM["vlm describe<br>LLaVA (local)"]
+    Capture --> VLM["vlm describe<br>Ollama vision model (local)"]
 
     Index --> Search["dom search<br>Element lookup by selector"]
 ```
@@ -58,7 +58,7 @@ In standalone mode, eyes is a CLI visual QA tool. In integrated mode, it runs as
 | AI agents can't "see" the UI | **`capture` + `describe`** — structure analysis and screenshots |
 | UI regressions go unnoticed in CI | **`diff`** — pixel comparison with diff image output |
 | Re-parsing DOM every turn is wasteful | **`dom index`** — SQLite element lookup by URL, persistent across turns |
-| Cloud vision sends screenshots off-device | **`vlm describe`** — local LLaVA via Candle, no data leaves your machine |
+| Cloud vision sends screenshots off-device | **`vlm describe`** — local vision model via Ollama, no data leaves your machine |
 
 ---
 
@@ -70,7 +70,7 @@ In standalone mode, eyes is a CLI visual QA tool. In integrated mode, it runs as
 | **Pixel diff** | `diff a.png b.png` — regression detection with visual diff output |
 | **DOM indexing** | `dom index <url>` — persistent SQLite element database |
 | **Structure extraction** | `describe <file>` — headings, links, forms without a browser |
-| **Local VLM** | `vlm describe` — on-device image captions (requires `--features vlm`) |
+| **Local VLM** | `vlm describe` — on-device image captions (requires a running Ollama server) |
 | **HTTP daemon** | `serve` — spine and CI integration |
 
 DOM database: `~/.autonomic/memory/eyes_dom.db`
@@ -86,7 +86,7 @@ DOM database: `~/.autonomic/memory/eyes_dom.db`
 | `agent-eyes describe <file>` | Page/file structure analysis (no browser) |
 | `agent-eyes verify` | UI regression check against baseline |
 | `agent-eyes dom index\|file\|stats\|search` | SQLite DOM index management |
-| `agent-eyes vlm describe\|status` | Local LLaVA (requires `--features vlm`) |
+| `agent-eyes vlm describe\|status` | Local vision model via Ollama (`candle` backend requires `--features vlm`) |
 | `agent-eyes serve` | HTTP daemon on port 3105 |
 | `agent-eyes serve-mcp` | Start MCP stdio server only (no HTTP daemon) |
 | `agent-eyes status` | Show config, DOM stats, VLM state |
@@ -146,10 +146,13 @@ Section `[eyes]` in `~/.autonomic/config.toml` (default port **3105**).
 ```toml
 [vlm]
 enabled = true
-model_id = "llava-hf/llava-1.5-7b-hf"
+backend = "ollama"
+ollama_url = "http://127.0.0.1:11434"
+ollama_model = "qwen2.5vl:7b"
 ```
 
-Build with VLM: `cargo build --release -p agent-eyes --features vlm`
+- `backend = "ollama"` (default) calls a local Ollama server and needs no build feature. Start it with `ollama serve` and pull the model once with `ollama pull qwen2.5vl:7b`.
+- `backend = "candle"` runs LLaVA in-process and needs `cargo build --release -p agent-eyes --features vlm`. It is limited to LLaVA 1.5 at the moment. LLaVA-NeXT fails inside candle 0.8.4, so use the Ollama backend for it.
 
 ---
 

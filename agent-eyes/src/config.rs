@@ -26,6 +26,24 @@ pub struct VlmConfig {
     pub temperature: f32,
     #[serde(default)]
     pub cpu: bool,
+    #[serde(default = "default_vlm_backend")]
+    pub backend: String,
+    #[serde(default = "default_ollama_url")]
+    pub ollama_url: String,
+    #[serde(default = "default_ollama_model")]
+    pub ollama_model: String,
+}
+
+fn default_vlm_backend() -> String {
+    "candle".into()
+}
+
+fn default_ollama_url() -> String {
+    "http://127.0.0.1:11434".into()
+}
+
+fn default_ollama_model() -> String {
+    "qwen2.5vl:7b".into()
 }
 
 fn default_vlm_model() -> String {
@@ -49,6 +67,9 @@ impl Default for VlmConfig {
             max_new_tokens: default_vlm_max_tokens(),
             temperature: default_vlm_temperature(),
             cpu: false,
+            backend: default_vlm_backend(),
+            ollama_url: default_ollama_url(),
+            ollama_model: default_ollama_model(),
         }
     }
 }

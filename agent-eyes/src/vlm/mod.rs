@@ -2,6 +2,7 @@
 
 #[cfg(feature = "vlm")]
 mod llava;
+pub mod ollama;
 
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
@@ -51,6 +52,10 @@ pub async fn describe_image(
     }
 
     let prompt = prompt.unwrap_or(default_prompt());
+
+    if config.backend == "ollama" {
+        return ollama::describe(image_path, prompt, config).await;
+    }
 
     #[cfg(feature = "vlm")]
     {

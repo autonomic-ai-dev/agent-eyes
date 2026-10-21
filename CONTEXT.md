@@ -44,7 +44,7 @@ flowchart TD
     
     CaptureWindow --> SaveCapture["Save to ~/.autonomic/captures/*.png"]
     SaveCapture --> OptionalVLM{"Local VLM<br>Enabled?"}
-    OptionalVLM -->|Yes| CandleDescribe["Candle LLaVA / Local VLM:<br>Produce structured semantic caption"]
+    OptionalVLM -->|Yes| CandleDescribe["Local VLM (Ollama, qwen2.5vl):<br>Produce structured semantic caption"]
     OptionalVLM -->|No| ReturnImageRef["Return local image path"]
 
     PHashDiff --> ComputeHash["Compute 64-bit DCT Perceptual Hashes"]
