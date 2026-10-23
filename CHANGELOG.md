@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.0.0-beta.3.9] - 2026-10-21
+
+### Added
+- Ollama VLM backend (`[vlm] backend = "ollama"`, default `qwen2.5vl:7b`) and Playwright-based screenshot capture.
+- `.verify/run.sh` entrypoint added.
+- macOS CLI notarization step when the App Store Connect API key secrets are set.
+
+### Changed
+- Candle LLaVA backend remains available with `--features vlm`; LLaVA-NeXT is not supported on candle 0.8.4.
+
+
 ## [Unreleased]
 
 ### Added
