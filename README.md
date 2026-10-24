@@ -103,6 +103,7 @@ Global `--progress` (or `AGENT_PROGRESS=1`) enables structured ProgressTree CLI 
 | `POST` | `/capture` | Capture screenshot |
 | `POST` | `/diff` | Pixel comparison |
 | `POST` | `/dom/index` | Index DOM from URL |
+| `GET` | `/dom/stats` | Indexed DOM statistics |
 | `GET` | `/dom/search` | Search indexed elements |
 | `GET` | `/vlm/status` | VLM model status |
 | `POST` | `/vlm/describe` | Describe image via local VLM |

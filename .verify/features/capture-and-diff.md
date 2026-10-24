@@ -26,6 +26,10 @@ Summary: agent-eyes captures web pages to PNG, compares two images pixel by pixe
   - Behaviour: `agent-eyes vlm describe|status`, `GET /vlm/status`, `POST /vlm/describe`. The `candle` backend needs `--features vlm`.
   - Outcome: A text description or a status with the model state.
 
+## Code
+
+- `agent-eyes`
+
 ## How to get to it (user POV)
 
 - CLI: `agent-eyes capture`, `diff`, `describe`, `verify`, `dom`, `vlm`, `serve`, `serve-mcp`, `status`
